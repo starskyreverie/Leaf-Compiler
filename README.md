@@ -1,6 +1,6 @@
 # LilacScript
 
-An object-oriented, general-purpose programming language that supports mathematical algebraic expressions, written in C. Includes a compiler, bytecode virtual machine, bytecode disassembler, and a read-eval-print-loop. 
+An object-oriented, general-purpose programming language that supports mathematical algebraic expressions, written in C. Includes a Pratt operator-precedence parser, bytecode assembler, bytecode virtual machine, bytecode disassembler, and a read-eval-print-loop. 
 
 ## Example LilacScript code
 
@@ -12,4 +12,4 @@ This section is coming soon.
 
 ## Licensing
 
-This uses the MIT License and follows Robert Nystrom's Clox implementation from his book [Crafting Interpreters](https://craftinginterpreters.com/). It's an amazing book that I learned a ton from and I highly recommend you give it a read.
+This uses the MIT License and follows Robert Nystrom's Clox implementation from his book [Crafting Interpreters](https://craftinginterpreters.com/). It's an absolutely amazing book that has taught me almost everything I know about compilers today.
