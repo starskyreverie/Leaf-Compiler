@@ -12,4 +12,4 @@ This section is coming soon.
 
 ## Licensing
 
-This uses the MIT License and follows Robert Nystrom's Clox implementation from his book (_Crafting Interpreters_)[https://craftinginterpreters.com/]. It's an amazing book that I learned a ton from and I highly recommend you give it a read.
+This uses the MIT License and follows Robert Nystrom's Clox implementation from his book [Crafting Interpreters](https://craftinginterpreters.com/). It's an amazing book that I learned a ton from and I highly recommend you give it a read.
