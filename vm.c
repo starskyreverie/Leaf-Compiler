@@ -24,12 +24,10 @@
 #include "memory.h"
 //< Strings vm-include-object-memory
 #include "vm.h"
+#include "natives.h"
 
 VM vm; // [one]
 //> Calls and Functions clock-native
-static Value clockNative(int argCount, Value* args) {
-  return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
-}
 //< Calls and Functions clock-native
 //> reset-stack
 static void resetStack() {
@@ -43,7 +41,7 @@ static void resetStack() {
 }
 //< reset-stack
 //> Types of Values runtime-error
-static void runtimeError(const char* format, ...) {
+void runtimeError(const char* format, ...) {
   va_list args;
   va_start(args, format);
   vfprintf(stderr, format, args);
@@ -86,12 +84,21 @@ static void runtimeError(const char* format, ...) {
 }
 //< Types of Values runtime-error
 //> Calls and Functions define-native
-static void defineNative(const char* name, NativeFn function) {
-  push(OBJ_VAL(copyString(name, (int)strlen(name))));
-  push(OBJ_VAL(newNative(function)));
-  tableSet(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1]);
-  pop();
-  pop();
+
+void defineNative(const char* name, NativeFn function) {
+    push(OBJ_VAL(copyString(name, (int)strlen(name))));
+    push(OBJ_VAL(newNative(function)));
+    tableSet(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1]);
+    pop();
+    pop();
+}
+
+void defineNativeVoid(const char* name, NativeFnVoid function) {
+    push(OBJ_VAL(copyString(name, (int)strlen(name))));
+    push(OBJ_VAL(newNativeVoid(function)));
+    tableSet(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1]);
+    pop();
+    pop();
 }
 //< Calls and Functions define-native
 
@@ -128,7 +135,7 @@ void initVM() {
 //< Methods and Initializers init-init-string
 //> Calls and Functions define-native-clock
 
-  defineNative("clock", clockNative);
+	defineAllNatives();
 //< Calls and Functions define-native-clock
 }
 
@@ -362,9 +369,6 @@ static void defineMethod(ObjString* name) {
 }
 //< Methods and Initializers define-method
 //> Types of Values is-falsey
-static bool isFalsey(Value value) {
-  return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
-}
 //< Types of Values is-falsey
 //> Strings concatenate
 static void concatenate() {

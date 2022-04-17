@@ -1,6 +1,6 @@
 # LilacScript
 
-An object-oriented, general-purpose programming language that supports mathematical algebraic expressions, written in C. Includes a Pratt operator-precedence parser, bytecode assembler, bytecode virtual machine, bytecode disassembler, and a read-eval-print-loop. 
+An object-oriented, general-purpose programming language that supports mathematical algebraic expressions (algebraic expressions, integrals, derivatives), written in C. Includes a Pratt operator-precedence parser, bytecode assembler, bytecode virtual machine, bytecode disassembler, and a read-eval-print-loop. 
 
 [Repl.it](https://replit.com/@pq43/LilacScript)
 
@@ -8,9 +8,13 @@ An object-oriented, general-purpose programming language that supports mathemati
 
 This section is coming soon.
 
-## Syntax and methods know about
+## Syntax and methods to know about
 
-This section is coming soon.
+`solveExp(String expr) -> expr`
+
+`derivative(String expr) -> String`
+
+`integral(String expr) -> `
 
 ## Licensing
 

@@ -107,4 +107,10 @@ void push(Value value);
 Value pop();
 //< push-pop
 
+void defineNative(const char* name, NativeFn function);
+
+void defineNativeVoid(const char* name, NativeFnVoid function);
+
+void runtimeError(const char* format, ...);
+
 #endif

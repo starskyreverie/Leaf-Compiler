@@ -172,4 +172,7 @@ void freeValueArray(ValueArray* array);
 void printValue(Value value);
 //< print-value-h
 
+char* valueToString(Value value);
+bool isFalsey(Value value);
+
 #endif
