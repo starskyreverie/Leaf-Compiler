@@ -1,10 +1,7 @@
 #ifndef clox_compiler_h
 #define clox_compiler_h
 
-//> Strings compiler-include-object
 #include "object.h"
-//< Strings compiler-include-object
-//> Compiling Expressions compile-h
 #include "vm.h"
 
 //< Compiling Expressions compile-h
