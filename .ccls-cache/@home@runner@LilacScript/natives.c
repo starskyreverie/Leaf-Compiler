@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 
 #include "natives.h"
 #include "object.h"
@@ -15,7 +16,48 @@ static Value clockNative(int argCount, Value* args) {
 static Value timeNative(int argCount, Value* args) {
     return NUMBER_VAL((double)time(NULL));
 }
+
+static Value sinFunction(int argCount, Value* args) {
+  if (argCount != 1) {
+      runtimeError("sin() takes exactly 1 argument (%d given).", argCount);
+      return NIL_VAL;
+  }
+
+	if(!IS_NUMBER(args[0])) {
+		runtimeError("The argument passed to sin() must be a number.", argCount);
+		return NIL_VAL;
+	}
+	
+	return NUMBER_VAL((double)(sin(args[0])));
+}
 		
+static Value cosFunction(int argCount, Value* args) {
+  if (argCount != 1) {
+      runtimeError("cos() takes exactly 1 argument (%d given).", argCount);
+      return NIL_VAL;
+  }
+
+	if(!IS_NUMBER(args[0])) {
+		runtimeError("The argument passed to cos() must be a number.", argCount);
+		return NIL_VAL;
+	}
+	
+	return NUMBER_VAL((double)(cos(args[0])));
+}
+
+static Value tanFunction(int argCount, Value* args) {
+  if (argCount != 1) {
+      runtimeError("tan() takes exactly 1 argument (%d given).", argCount);
+      return NIL_VAL;
+  }
+
+	if(!IS_NUMBER(args[0])) {
+		runtimeError("The argument passed to tan() must be a number.", argCount);
+		return NIL_VAL;
+	}
+	
+	return NUMBER_VAL((double)(tan(args[0])));
+}
 static Value strNative(int argCount, Value* args) {
     if (argCount != 1) {
         runtimeError("str() takes exactly 1 argument (%d given).", argCount);
@@ -52,16 +94,55 @@ static Value lenNative(int argCount, Value* args) {
     if (IS_STRING(args[0]))
         return NUMBER_VAL(AS_STRING(args[0])->length);
 
-    runtimeError("Unsupported type passed to len()");
+    runtimeError("Unsupported type passed to len()", argCount);
     return NIL_VAL;
 }
 
+
+float BooleRule(float (*y)(int), float a, float b)
+{
+    // Number of intervals
+ 
+    int n = 4;
+    int h;
+ 
+    // Computing the step size
+    h = ((b - a) / n);
+    float sum = 0;
+ 
+    // Substituing a = 0, b = 4 and h = 1
+    float bl = (7 * y(a) + 32 * y(a + h)
+                + 12 * y(a + 2 * h)
+                + 32 * y(a + 3 * h)
+                + 7 * y(a + 4 * h))
+               * 2 * h / 45;
+ 
+    sum = sum + bl;
+    return sum;
+}
+
+
+static Value integralNative(int argCount, Value* args) {
+	runtimeError("Function is not a valid function.", argCount);
+	return NIL_VAL;
+}
+
+static Value derivativeNative(int argCount, Value* args) {
+	runtimeError("Function is not a valid function.", argCount);
+	return NIL_VAL;
+}
+
+static Value graphNative(int argCount, Value* args) {
+	runtimeError("Function is not a valid function.", argCount);
+	return NIL_VAL;
+}
+
 const char* nativeNames[] = {
-    "clock", "time", "str", "bool", "len",
+    "clock", "time", "str", "bool", "len", "sin", "cos", "tan", "derivative", "integral", "graph"
 };
 
 NativeFn nativeFunctions[] = {
-    clockNative, timeNative, strNative, boolNative, lenNative,
+    clockNative, timeNative, strNative, boolNative, lenNative, sinFunction, cosFunction, tanFunction, derivativeNative, integralNative, graphNative
 };
 
 static bool printNative(int argCount, Value* args) {

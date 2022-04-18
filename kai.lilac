@@ -1,4 +1,0 @@
-var kirill = "i am kirill lubko";
-var kirills_mother = kirill + "s mother LOLOL";
-
-print kirills_mother;
