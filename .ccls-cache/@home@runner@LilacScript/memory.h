@@ -1,6 +1,6 @@
 //> Chunks of Bytecode memory-h
-#ifndef clox_memory_h
-#define clox_memory_h
+#ifndef lilac_memory_h
+#define lilac_memory_h
 
 #include "common.h"
 //> Strings memory-include-object

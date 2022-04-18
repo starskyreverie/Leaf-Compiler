@@ -1,6 +1,6 @@
 //> Strings object-h
-#ifndef clox_object_h
-#define clox_object_h
+#ifndef lilac_object_h
+#define lilac_object_h
 
 #include "common.h"
 //> Calls and Functions object-include-chunk

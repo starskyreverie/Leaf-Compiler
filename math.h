@@ -1,5 +1,5 @@
-#ifndef clox_math_h
-#define clox_math_h
+#ifndef lilac_math_h
+#define lilac_math_h
 
 #include <math.h>
 

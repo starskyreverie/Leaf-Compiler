@@ -1,37 +1,22 @@
-//> Scanning on Demand compiler-c
 #include <stdio.h>
-//> Compiling Expressions compiler-include-stdlib
 #include <stdlib.h>
-//< Compiling Expressions compiler-include-stdlib
-//> Local Variables compiler-include-string
 #include <string.h>
-//< Local Variables compiler-include-string
 
 #include "common.h"
 #include "compiler.h"
-//> Garbage Collection compiler-include-memory
 #include "memory.h"
-//< Garbage Collection compiler-include-memory
 #include "scanner.h"
-//> Compiling Expressions include-debug
 
 #ifdef DEBUG_PRINT_CODE
 #include "debug.h"
 #endif
-//< Compiling Expressions include-debug
-//> Compiling Expressions parser
 
 typedef struct {
   Token current;
   Token previous;
-//> had-error-field
   bool hadError;
-//< had-error-field
-//> panic-mode-field
   bool panicMode;
-//< panic-mode-field
 } Parser;
-//> precedence
 
 typedef enum {
   PREC_NONE,
@@ -47,121 +32,63 @@ typedef enum {
   PREC_CALL,        // . ()
   PREC_PRIMARY
 } Precedence;
-//< precedence
-//> parse-fn-type
-
-//< parse-fn-type
-/* Compiling Expressions parse-fn-type < Global Variables parse-fn-type
-typedef void (*ParseFn)();
-*/
-//> Global Variables parse-fn-type
 typedef void (*ParseFn)(bool canAssign);
-//< Global Variables parse-fn-type
-//> parse-rule
 
 typedef struct {
   ParseFn prefix;
   ParseFn infix;
   Precedence precedence;
 } ParseRule;
-//< parse-rule
-//> Local Variables local-struct
 
 typedef struct {
   Token name;
   int depth;
-//> Closures is-captured-field
   bool isCaptured;
-//< Closures is-captured-field
 } Local;
-//< Local Variables local-struct
-//> Closures upvalue-struct
+
 typedef struct {
   uint8_t index;
   bool isLocal;
 } Upvalue;
-//< Closures upvalue-struct
-//> Calls and Functions function-type-enum
+
 typedef enum {
   TYPE_FUNCTION,
-//> Methods and Initializers initializer-type-enum
   TYPE_INITIALIZER,
-//< Methods and Initializers initializer-type-enum
-//> Methods and Initializers method-type-enum
   TYPE_METHOD,
-//< Methods and Initializers method-type-enum
   TYPE_SCRIPT
 } FunctionType;
-//< Calls and Functions function-type-enum
-//> Local Variables compiler-struct
 
-/* Local Variables compiler-struct < Calls and Functions enclosing-field
-typedef struct {
-*/
-//> Calls and Functions enclosing-field
 typedef struct Compiler {
   struct Compiler* enclosing;
-//< Calls and Functions enclosing-field
-//> Calls and Functions function-fields
   ObjFunction* function;
   FunctionType type;
 
-//< Calls and Functions function-fields
   Local locals[UINT8_COUNT];
   int localCount;
-//> Closures upvalues-array
   Upvalue upvalues[UINT8_COUNT];
-//< Closures upvalues-array
   int scopeDepth;
 } Compiler;
-//< Local Variables compiler-struct
-//> Methods and Initializers class-compiler-struct
 
 typedef struct ClassCompiler {
   struct ClassCompiler* enclosing;
-//> Superclasses has-superclass
   bool hasSuperclass;
-//< Superclasses has-superclass
 } ClassCompiler;
-//< Methods and Initializers class-compiler-struct
 
 Parser parser;
-//< Compiling Expressions parser
-//> Local Variables current-compiler
 Compiler* current = NULL;
-//< Local Variables current-compiler
-//> Methods and Initializers current-class
 ClassCompiler* currentClass = NULL;
-//< Methods and Initializers current-class
-//> Compiling Expressions compiling-chunk
-/* Compiling Expressions compiling-chunk < Calls and Functions current-chunk
-Chunk* compilingChunk;
-static Chunk* currentChunk() {
-  return compilingChunk;
-}
-*/
-//> Calls and Functions current-chunk
 
 static Chunk* currentChunk() {
   return &current->function->chunk;
 }
-//< Calls and Functions current-chunk
-
-//< Compiling Expressions compiling-chunk
-//> Compiling Expressions error-at
 static void errorAt(Token* token, const char* message) {
-//> check-panic-mode
   if (parser.panicMode) return;
-//< check-panic-mode
-//> set-panic-mode
   parser.panicMode = true;
-//< set-panic-mode
   fprintf(stderr, "[line %d] Error", token->line);
 
   if (token->type == TOKEN_EOF) {
     fprintf(stderr, " at end");
   } else if (token->type == TOKEN_ERROR) {
-    // Nothing.
   } else {
     fprintf(stderr, " at '%.*s'", token->length, token->start);
   }
@@ -169,18 +96,12 @@ static void errorAt(Token* token, const char* message) {
   fprintf(stderr, ": %s\n", message);
   parser.hadError = true;
 }
-//< Compiling Expressions error-at
-//> Compiling Expressions error
 static void error(const char* message) {
   errorAt(&parser.previous, message);
 }
-//< Compiling Expressions error
-//> Compiling Expressions error-at-current
 static void errorAtCurrent(const char* message) {
   errorAt(&parser.current, message);
 }
-//< Compiling Expressions error-at-current
-//> Compiling Expressions advance
 
 static void advance() {
   parser.previous = parser.current;
@@ -192,8 +113,6 @@ static void advance() {
     errorAtCurrent(parser.current.start);
   }
 }
-//< Compiling Expressions advance
-//> Compiling Expressions consume
 static void consume(TokenType type, const char* message) {
   if (parser.current.type == type) {
     advance();
@@ -202,31 +121,21 @@ static void consume(TokenType type, const char* message) {
 
   errorAtCurrent(message);
 }
-//< Compiling Expressions consume
-//> Global Variables check
 static bool check(TokenType type) {
   return parser.current.type == type;
 }
-//< Global Variables check
-//> Global Variables match
 static bool match(TokenType type) {
   if (!check(type)) return false;
   advance();
   return true;
 }
-//< Global Variables match
-//> Compiling Expressions emit-byte
 static void emitByte(uint8_t byte) {
   writeChunk(currentChunk(), byte, parser.previous.line);
 }
-//< Compiling Expressions emit-byte
-//> Compiling Expressions emit-bytes
 static void emitBytes(uint8_t byte1, uint8_t byte2) {
   emitByte(byte1);
   emitByte(byte2);
 }
-//< Compiling Expressions emit-bytes
-//> Jumping Back and Forth emit-loop
 static void emitLoop(int loopStart) {
   emitByte(OP_LOOP);
 
@@ -236,32 +145,21 @@ static void emitLoop(int loopStart) {
   emitByte((offset >> 8) & 0xff);
   emitByte(offset & 0xff);
 }
-//< Jumping Back and Forth emit-loop
-//> Jumping Back and Forth emit-jump
 static int emitJump(uint8_t instruction) {
   emitByte(instruction);
   emitByte(0xff);
   emitByte(0xff);
   return currentChunk()->count - 2;
 }
-//< Jumping Back and Forth emit-jump
-//> Compiling Expressions emit-return
 static void emitReturn() {
-/* Calls and Functions return-nil < Methods and Initializers return-this
-  emitByte(OP_NIL);
-*/
-//> Methods and Initializers return-this
   if (current->type == TYPE_INITIALIZER) {
     emitBytes(OP_GET_LOCAL, 0);
   } else {
     emitByte(OP_NIL);
   }
 
-//< Methods and Initializers return-this
   emitByte(OP_RETURN);
 }
-//< Compiling Expressions emit-return
-//> Compiling Expressions make-constant
 static uint8_t makeConstant(Value value) {
   int constant = addConstant(currentChunk(), value);
   if (constant > UINT8_MAX) {
@@ -271,15 +169,10 @@ static uint8_t makeConstant(Value value) {
 
   return (uint8_t)constant;
 }
-//< Compiling Expressions make-constant
-//> Compiling Expressions emit-constant
 static void emitConstant(Value value) {
   emitBytes(OP_CONSTANT, makeConstant(value));
 }
-//< Compiling Expressions emit-constant
-//> Jumping Back and Forth patch-jump
 static void patchJump(int offset) {
-  // -2 to adjust for the bytecode for the jump offset itself.
   int jump = currentChunk()->count - offset - 2;
 
   if (jump > UINT16_MAX) {
@@ -289,43 +182,22 @@ static void patchJump(int offset) {
   currentChunk()->code[offset] = (jump >> 8) & 0xff;
   currentChunk()->code[offset + 1] = jump & 0xff;
 }
-//< Jumping Back and Forth patch-jump
-//> Local Variables init-compiler
-/* Local Variables init-compiler < Calls and Functions init-compiler
-static void initCompiler(Compiler* compiler) {
-*/
-//> Calls and Functions init-compiler
 static void initCompiler(Compiler* compiler, FunctionType type) {
-//> store-enclosing
   compiler->enclosing = current;
-//< store-enclosing
   compiler->function = NULL;
   compiler->type = type;
-//< Calls and Functions init-compiler
   compiler->localCount = 0;
   compiler->scopeDepth = 0;
-//> Calls and Functions init-function
   compiler->function = newFunction();
-//< Calls and Functions init-function
   current = compiler;
-//> Calls and Functions init-function-name
   if (type != TYPE_SCRIPT) {
     current->function->name = copyString(parser.previous.start,
                                          parser.previous.length);
   }
-//< Calls and Functions init-function-name
-//> Calls and Functions init-function-slot
 
   Local* local = &current->locals[current->localCount++];
   local->depth = 0;
-//> Closures init-zero-local-is-captured
   local->isCaptured = false;
-//< Closures init-zero-local-is-captured
-/* Calls and Functions init-function-slot < Methods and Initializers slot-zero
-  local->name.start = "";
-  local->name.length = 0;
-*/
-//> Methods and Initializers slot-zero
   if (type != TYPE_FUNCTION) {
     local->name.start = "this";
     local->name.length = 4;
@@ -333,117 +205,69 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     local->name.start = "";
     local->name.length = 0;
   }
-//< Methods and Initializers slot-zero
-//< Calls and Functions init-function-slot
 }
-//< Local Variables init-compiler
-//> Compiling Expressions end-compiler
-/* Compiling Expressions end-compiler < Calls and Functions end-compiler
-static void endCompiler() {
-*/
-//> Calls and Functions end-compiler
 static ObjFunction* endCompiler() {
-//< Calls and Functions end-compiler
   emitReturn();
-//> Calls and Functions end-function
   ObjFunction* function = current->function;
 
-//< Calls and Functions end-function
-//> dump-chunk
 #ifdef DEBUG_PRINT_CODE
   if (!parser.hadError) {
-/* Compiling Expressions dump-chunk < Calls and Functions disassemble-end
-    disassembleChunk(currentChunk(), "code");
-*/
-//> Calls and Functions disassemble-end
     disassembleChunk(currentChunk(), function->name != NULL
         ? function->name->chars : "<script>");
-//< Calls and Functions disassemble-end
   }
 #endif
-//< dump-chunk
-//> Calls and Functions return-function
 
-//> restore-enclosing
   current = current->enclosing;
-//< restore-enclosing
   return function;
-//< Calls and Functions return-function
 }
-//< Compiling Expressions end-compiler
-//> Local Variables begin-scope
 static void beginScope() {
   current->scopeDepth++;
 }
-//< Local Variables begin-scope
-//> Local Variables end-scope
 static void endScope() {
   current->scopeDepth--;
-//> pop-locals
 
   while (current->localCount > 0 &&
          current->locals[current->localCount - 1].depth >
             current->scopeDepth) {
-/* Local Variables pop-locals < Closures end-scope
-    emitByte(OP_POP);
-*/
-//> Closures end-scope
     if (current->locals[current->localCount - 1].isCaptured) {
       emitByte(OP_CLOSE_UPVALUE);
     } else {
       emitByte(OP_POP);
     }
-//< Closures end-scope
     current->localCount--;
   }
-//< pop-locals
 }
-//< Local Variables end-scope
-//> Compiling Expressions forward-declarations
 
 static void expression();
-//> Global Variables forward-declarations
 static void statement();
 static void declaration();
-//< Global Variables forward-declarations
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
-//< Compiling Expressions forward-declarations
-//> Global Variables identifier-constant
 static uint8_t identifierConstant(Token* name) {
   return makeConstant(OBJ_VAL(copyString(name->start,
                                          name->length)));
 }
-//< Global Variables identifier-constant
-//> Local Variables identifiers-equal
 static bool identifiersEqual(Token* a, Token* b) {
   if (a->length != b->length) return false;
   return memcmp(a->start, b->start, a->length) == 0;
 }
-//< Local Variables identifiers-equal
-//> Local Variables resolve-local
 static int resolveLocal(Compiler* compiler, Token* name) {
   for (int i = compiler->localCount - 1; i >= 0; i--) {
     Local* local = &compiler->locals[i];
     if (identifiersEqual(name, &local->name)) {
-//> own-initializer-error
       if (local->depth == -1) {
         error("Can't read local variable in its own initializer.");
       }
-//< own-initializer-error
       return i;
     }
   }
 
   return -1;
 }
-//< Local Variables resolve-local
-//> Closures add-upvalue
 static int addUpvalue(Compiler* compiler, uint8_t index,
                       bool isLocal) {
   int upvalueCount = compiler->function->upvalueCount;
-//> existing-upvalue
 
   for (int i = 0; i < upvalueCount; i++) {
     Upvalue* upvalue = &compiler->upvalues[i];
@@ -452,69 +276,46 @@ static int addUpvalue(Compiler* compiler, uint8_t index,
     }
   }
 
-//< existing-upvalue
-//> too-many-upvalues
   if (upvalueCount == UINT8_COUNT) {
     error("Too many closure variables in function.");
     return 0;
   }
 
-//< too-many-upvalues
   compiler->upvalues[upvalueCount].isLocal = isLocal;
   compiler->upvalues[upvalueCount].index = index;
   return compiler->function->upvalueCount++;
 }
-//< Closures add-upvalue
-//> Closures resolve-upvalue
 static int resolveUpvalue(Compiler* compiler, Token* name) {
   if (compiler->enclosing == NULL) return -1;
 
   int local = resolveLocal(compiler->enclosing, name);
   if (local != -1) {
-//> mark-local-captured
     compiler->enclosing->locals[local].isCaptured = true;
-//< mark-local-captured
     return addUpvalue(compiler, (uint8_t)local, true);
   }
 
-//> resolve-upvalue-recurse
   int upvalue = resolveUpvalue(compiler->enclosing, name);
   if (upvalue != -1) {
     return addUpvalue(compiler, (uint8_t)upvalue, false);
   }
   
-//< resolve-upvalue-recurse
   return -1;
 }
-//< Closures resolve-upvalue
-//> Local Variables add-local
 static void addLocal(Token name) {
-//> too-many-locals
   if (current->localCount == UINT8_COUNT) {
     error("Too many local variables in function.");
     return;
   }
 
-//< too-many-locals
   Local* local = &current->locals[current->localCount++];
   local->name = name;
-/* Local Variables add-local < Local Variables declare-undefined
-  local->depth = current->scopeDepth;
-*/
-//> declare-undefined
   local->depth = -1;
-//< declare-undefined
-//> Closures init-is-captured
   local->isCaptured = false;
-//< Closures init-is-captured
 }
-//< Local Variables add-local
-//> Local Variables declare-variable
 static void declareVariable() {
   if (current->scopeDepth == 0) return;
 
   Token* name = &parser.previous;
-//> existing-in-scope
   for (int i = current->localCount - 1; i >= 0; i--) {
     Local* local = &current->locals[i];
     if (local->depth != -1 && local->depth < current->scopeDepth) {
@@ -526,46 +327,29 @@ static void declareVariable() {
     }
   }
 
-//< existing-in-scope
   addLocal(*name);
 }
-//< Local Variables declare-variable
-//> Global Variables parse-variable
 static uint8_t parseVariable(const char* errorMessage) {
   consume(TOKEN_IDENTIFIER, errorMessage);
-//> Local Variables parse-local
 
   declareVariable();
   if (current->scopeDepth > 0) return 0;
 
-//< Local Variables parse-local
   return identifierConstant(&parser.previous);
 }
-//< Global Variables parse-variable
-//> Local Variables mark-initialized
 static void markInitialized() {
-//> Calls and Functions check-depth
   if (current->scopeDepth == 0) return;
-//< Calls and Functions check-depth
   current->locals[current->localCount - 1].depth =
       current->scopeDepth;
 }
-//< Local Variables mark-initialized
-//> Global Variables define-variable
 static void defineVariable(uint8_t global) {
-//> Local Variables define-variable
   if (current->scopeDepth > 0) {
-//> define-local
     markInitialized();
-//< define-local
     return;
   }
 
-//< Local Variables define-variable
   emitBytes(OP_DEFINE_GLOBAL, global);
 }
-//< Global Variables define-variable
-//> Calls and Functions argument-list
 static uint8_t argumentList() {
   uint8_t argCount = 0;
   if (!check(TOKEN_RIGHT_PAREN)) {
@@ -582,8 +366,6 @@ static uint8_t argumentList() {
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
   return argCount;
 }
-//< Calls and Functions argument-list
-//> Jumping Back and Forth and
 static void and_(bool canAssign) {
   int endJump = emitJump(OP_JUMP_IF_FALSE);
 
@@ -592,12 +374,6 @@ static void and_(bool canAssign) {
 
   patchJump(endJump);
 }
-//< Jumping Back and Forth and
-//> Compiling Expressions binary
-/* Compiling Expressions binary < Global Variables binary
-static void binary() {
-*/
-//> Global Variables binary
 static void binary(bool canAssign) {
 //< Global Variables binary
   TokenType operatorType = parser.previous.type;
@@ -621,14 +397,10 @@ static void binary(bool canAssign) {
     default: return; // Unreachable.
   }
 }
-//< Compiling Expressions binary
-//> Calls and Functions compile-call
 static void call(bool canAssign) {
   uint8_t argCount = argumentList();
   emitBytes(OP_CALL, argCount);
 }
-//< Calls and Functions compile-call
-//> Classes and Instances compile-dot
 static void dot(bool canAssign) {
   consume(TOKEN_IDENTIFIER, "Expect property name after '.'.");
   uint8_t name = identifierConstant(&parser.previous);
@@ -646,12 +418,6 @@ static void dot(bool canAssign) {
     emitBytes(OP_GET_PROPERTY, name);
   }
 }
-//< Classes and Instances compile-dot
-//> Types of Values parse-literal
-/* Types of Values parse-literal < Global Variables parse-literal
-static void literal() {
-*/
-//> Global Variables parse-literal
 static void literal(bool canAssign) {
 //< Global Variables parse-literal
   switch (parser.previous.type) {
@@ -661,35 +427,14 @@ static void literal(bool canAssign) {
     default: return; // Unreachable.
   }
 }
-//< Types of Values parse-literal
-//> Compiling Expressions grouping
-/* Compiling Expressions grouping < Global Variables grouping
-static void grouping() {
-*/
-//> Global Variables grouping
 static void grouping(bool canAssign) {
-//< Global Variables grouping
   expression();
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
-//< Compiling Expressions grouping
-/* Compiling Expressions number < Global Variables number
-static void number() {
-*/
-//> Compiling Expressions number
-//> Global Variables number
 static void number(bool canAssign) {
-//< Global Variables number
   double value = strtod(parser.previous.start, NULL);
-/* Compiling Expressions number < Types of Values const-number-val
-  emitConstant(value);
-*/
-//> Types of Values const-number-val
   emitConstant(NUMBER_VAL(value));
-//< Types of Values const-number-val
 }
-//< Compiling Expressions number
-//> Jumping Back and Forth or
 static void or_(bool canAssign) {
   int elseJump = emitJump(OP_JUMP_IF_FALSE);
   int endJump = emitJump(OP_JUMP);
@@ -711,18 +456,7 @@ static void string(bool canAssign) {
   emitConstant(OBJ_VAL(copyString(parser.previous.start + 1,
                                   parser.previous.length - 2)));
 }
-//< Strings parse-string
-/* Global Variables read-named-variable < Global Variables named-variable-signature
-static void namedVariable(Token name) {
-*/
-//> Global Variables named-variable-signature
 static void namedVariable(Token name, bool canAssign) {
-//< Global Variables named-variable-signature
-/* Global Variables read-named-variable < Local Variables named-local
-  uint8_t arg = identifierConstant(&name);
-*/
-//> Global Variables read-named-variable
-//> Local Variables named-local
   uint8_t getOp, setOp;
   int arg = resolveLocal(current, &name);
   if (arg != -1) {
@@ -738,55 +472,23 @@ static void namedVariable(Token name, bool canAssign) {
     getOp = OP_GET_GLOBAL;
     setOp = OP_SET_GLOBAL;
   }
-//< Local Variables named-local
-/* Global Variables read-named-variable < Global Variables named-variable
-  emitBytes(OP_GET_GLOBAL, arg);
-*/
-//> named-variable
-
-/* Global Variables named-variable < Global Variables named-variable-can-assign
-  if (match(TOKEN_EQUAL)) {
-*/
-//> named-variable-can-assign
   if (canAssign && match(TOKEN_EQUAL)) {
 //< named-variable-can-assign
     expression();
-/* Global Variables named-variable < Local Variables emit-set
-    emitBytes(OP_SET_GLOBAL, arg);
-*/
-//> Local Variables emit-set
     emitBytes(setOp, (uint8_t)arg);
-//< Local Variables emit-set
   } else {
-/* Global Variables named-variable < Local Variables emit-get
-    emitBytes(OP_GET_GLOBAL, arg);
-*/
-//> Local Variables emit-get
     emitBytes(getOp, (uint8_t)arg);
-//< Local Variables emit-get
   }
-//< named-variable
 }
-//< Global Variables read-named-variable
-/* Global Variables variable-without-assign < Global Variables variable
-static void variable() {
-  namedVariable(parser.previous);
-}
-*/
-//> Global Variables variable
 static void variable(bool canAssign) {
   namedVariable(parser.previous, canAssign);
 }
-//< Global Variables variable
-//> Superclasses synthetic-token
 static Token syntheticToken(const char* text) {
   Token token;
   token.start = text;
   token.length = (int)strlen(text);
   return token;
 }
-//< Superclasses synthetic-token
-//> Superclasses super
 static void super_(bool canAssign) {
 //> super-errors
   if (currentClass == NULL) {
@@ -802,12 +504,6 @@ static void super_(bool canAssign) {
 //> super-get
   
   namedVariable(syntheticToken("this"), false);
-/* Superclasses super-get < Superclasses super-invoke
-  namedVariable(syntheticToken("super"), false);
-  emitBytes(OP_GET_SUPER, name);
-*/
-//< super-get
-//> super-invoke
   if (match(TOKEN_LEFT_PAREN)) {
     uint8_t argCount = argumentList();
     namedVariable(syntheticToken("super"), false);
@@ -817,18 +513,13 @@ static void super_(bool canAssign) {
     namedVariable(syntheticToken("super"), false);
     emitBytes(OP_GET_SUPER, name);
   }
-//< super-invoke
 }
-//< Superclasses super
-//> Methods and Initializers this
 static void this_(bool canAssign) {
-//> this-outside-class
   if (currentClass == NULL) {
     error("Can't use 'this' outside of a class.");
     return;
   }
   
-//< this-outside-class
   variable(false);
 } // [this]
 //< Methods and Initializers this

@@ -1,6 +1,6 @@
 //> A Virtual Machine vm-h
-#ifndef clox_vm_h
-#define clox_vm_h
+#ifndef lilac_vm_h
+#define lilac_vm_h
 
 /* A Virtual Machine vm-h < Calls and Functions vm-include-object
 #include "chunk.h"

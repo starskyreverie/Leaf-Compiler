@@ -1,6 +1,6 @@
 //> Chunks of Bytecode value-h
-#ifndef clox_value_h
-#define clox_value_h
+#ifndef lilac_value_h
+#define lilac_value_h
 //> Optimization include-string
 
 #include <string.h>
