@@ -1,6 +1,6 @@
 # LilacScript
 
-An object-oriented, general-purpose programming language that supports mathematical algebraic expressions (graphing expressions, integrals, derivatives), written in C. Includes a Pratt operator-precedence parser, bytecode assembler, bytecode virtual machine, bytecode disassembler, and a read-eval-print-loop. 
+An object-oriented, dynamically typed, general-purpose programming language that supports mathematical algebraic expressions (graphing expressions, integrals, derivatives), written in C. Includes a Pratt operator-precedence parser, bytecode assembler, bytecode virtual machine, bytecode disassembler, and a read-eval-print-loop. 
 
 [Repl.it](https://replit.com/@pq43/LilacScript)
 
@@ -40,4 +40,4 @@ You can either use your own Makefile or the one already here in this repo to run
 
 ## Licensing
 
-This uses the MIT License and follows Robert Nystrom's Clox implementation from his book [Crafting Interpreters](https://craftinginterpreters.com/). It's an absolutely amazing book that has taught me almost everything I know about compilers today.
+This uses the MIT License and follows Robert Nystrom's Clox implementation from his book [Crafting Interpreters](https://craftinginterpreters.com/). It's an amazing book that has taught me most of what I know about compilers today.
