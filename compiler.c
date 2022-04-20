@@ -298,7 +298,7 @@ static int resolveUpvalue(Compiler* compiler, Token* name) {
   if (upvalue != -1) {
     return addUpvalue(compiler, (uint8_t)upvalue, false);
   }
-  
+
   return -1;
 }
 static void addLocal(Token name) {
@@ -319,9 +319,9 @@ static void declareVariable() {
   for (int i = current->localCount - 1; i >= 0; i--) {
     Local* local = &current->locals[i];
     if (local->depth != -1 && local->depth < current->scopeDepth) {
-      break; // [negative]
+      break;
     }
-    
+
     if (identifiersEqual(name, &local->name)) {
       error("Already a variable with this name in this scope.");
     }
@@ -355,11 +355,11 @@ static uint8_t argumentList() {
   if (!check(TOKEN_RIGHT_PAREN)) {
     do {
       expression();
-//> arg-limit
+
       if (argCount == 255) {
         error("Can't have more than 255 arguments.");
       }
-//< arg-limit
+
       argCount++;
     } while (match(TOKEN_COMMA));
   }
@@ -375,26 +375,26 @@ static void and_(bool canAssign) {
   patchJump(endJump);
 }
 static void binary(bool canAssign) {
-//< Global Variables binary
+
   TokenType operatorType = parser.previous.type;
   ParseRule* rule = getRule(operatorType);
   parsePrecedence((Precedence)(rule->precedence + 1));
 
   switch (operatorType) {
-//> Types of Values comparison-operators
-    case TOKEN_BANG_EQUAL:    emitBytes(OP_EQUAL, OP_NOT); break;
-    case TOKEN_EQUAL_EQUAL:   emitByte(OP_EQUAL); break;
-    case TOKEN_GREATER:       emitByte(OP_GREATER); break;
+
+    case TOKEN_BANG_EQUAL: emitBytes(OP_EQUAL, OP_NOT); break;
+    case TOKEN_EQUAL_EQUAL: emitByte(OP_EQUAL); break;
+    case TOKEN_GREATER: emitByte(OP_GREATER); break;
     case TOKEN_GREATER_EQUAL: emitBytes(OP_LESS, OP_NOT); break;
-    case TOKEN_LESS:          emitByte(OP_LESS); break;
-    case TOKEN_LESS_EQUAL:    emitBytes(OP_GREATER, OP_NOT); break;
-//< Types of Values comparison-operators
-    case TOKEN_PLUS:          emitByte(OP_ADD); break;
-		case TOKEN_POWER:					emitByte(OP_POWER); break;
-    case TOKEN_MINUS:         emitByte(OP_SUBTRACT); break;
-    case TOKEN_STAR:          emitByte(OP_MULTIPLY); break;
-    case TOKEN_SLASH:         emitByte(OP_DIVIDE); break;
-    default: return; // Unreachable.
+    case TOKEN_LESS: emitByte(OP_LESS); break;
+    case TOKEN_LESS_EQUAL: emitBytes(OP_GREATER, OP_NOT); break;
+
+    case TOKEN_PLUS: emitByte(OP_ADD); break;
+  case TOKEN_POWER: emitByte(OP_POWER); break;
+    case TOKEN_MINUS: emitByte(OP_SUBTRACT); break;
+    case TOKEN_STAR: emitByte(OP_MULTIPLY); break;
+    case TOKEN_SLASH: emitByte(OP_DIVIDE); break;
+    default: return;
   }
 }
 static void call(bool canAssign) {
@@ -408,23 +408,23 @@ static void dot(bool canAssign) {
   if (canAssign && match(TOKEN_EQUAL)) {
     expression();
     emitBytes(OP_SET_PROPERTY, name);
-//> Methods and Initializers parse-call
+
   } else if (match(TOKEN_LEFT_PAREN)) {
     uint8_t argCount = argumentList();
     emitBytes(OP_INVOKE, name);
     emitByte(argCount);
-//< Methods and Initializers parse-call
+
   } else {
     emitBytes(OP_GET_PROPERTY, name);
   }
 }
 static void literal(bool canAssign) {
-//< Global Variables parse-literal
+
   switch (parser.previous.type) {
     case TOKEN_FALSE: emitByte(OP_FALSE); break;
     case TOKEN_NIL: emitByte(OP_NIL); break;
     case TOKEN_TRUE: emitByte(OP_TRUE); break;
-    default: return; // Unreachable.
+    default: return;
   }
 }
 static void grouping(bool canAssign) {
@@ -445,14 +445,14 @@ static void or_(bool canAssign) {
   parsePrecedence(PREC_OR);
   patchJump(endJump);
 }
-//< Jumping Back and Forth or
-/* Strings parse-string < Global Variables string
-static void string() {
-*/
-//> Strings parse-string
-//> Global Variables string
+
+
+
+
+
+
 static void string(bool canAssign) {
-//< Global Variables string
+
   emitConstant(OBJ_VAL(copyString(parser.previous.start + 1,
                                   parser.previous.length - 2)));
 }
@@ -462,18 +462,18 @@ static void namedVariable(Token name, bool canAssign) {
   if (arg != -1) {
     getOp = OP_GET_LOCAL;
     setOp = OP_SET_LOCAL;
-//> Closures named-variable-upvalue
+
   } else if ((arg = resolveUpvalue(current, &name)) != -1) {
     getOp = OP_GET_UPVALUE;
     setOp = OP_SET_UPVALUE;
-//< Closures named-variable-upvalue
+
   } else {
     arg = identifierConstant(&name);
     getOp = OP_GET_GLOBAL;
     setOp = OP_SET_GLOBAL;
   }
   if (canAssign && match(TOKEN_EQUAL)) {
-//< named-variable-can-assign
+
     expression();
     emitBytes(setOp, (uint8_t)arg);
   } else {
@@ -490,19 +490,19 @@ static Token syntheticToken(const char* text) {
   return token;
 }
 static void super_(bool canAssign) {
-//> super-errors
+
   if (currentClass == NULL) {
     error("Can't use 'super' outside of a class.");
   } else if (!currentClass->hasSuperclass) {
     error("Can't use 'super' in a class with no superclass.");
   }
 
-//< super-errors
+
   consume(TOKEN_DOT, "Expect '.' after 'super'.");
   consume(TOKEN_IDENTIFIER, "Expect superclass method name.");
   uint8_t name = identifierConstant(&parser.previous);
-//> super-get
-  
+
+
   namedVariable(syntheticToken("this"), false);
   if (match(TOKEN_LEFT_PAREN)) {
     uint8_t argCount = argumentList();
@@ -519,162 +519,155 @@ static void this_(bool canAssign) {
     error("Can't use 'this' outside of a class.");
     return;
   }
-  
+
   variable(false);
-} // [this]
-//< Methods and Initializers this
-//> Compiling Expressions unary
-/* Compiling Expressions unary < Global Variables unary
-static void unary() {
-*/
-//> Global Variables unary
+}
+
+
+
+
+
+
 static void unary(bool canAssign) {
-//< Global Variables unary
+
   TokenType operatorType = parser.previous.type;
 
-  // Compile the operand.
-/* Compiling Expressions unary < Compiling Expressions unary-operand
-  expression();
-*/
-//> unary-operand
-  parsePrecedence(PREC_UNARY);
-//< unary-operand
 
-  // Emit the operator instruction.
+
+
+
+
+  parsePrecedence(PREC_UNARY);
+
+
+
   switch (operatorType) {
-//> Types of Values compile-not
+
     case TOKEN_BANG: emitByte(OP_NOT); break;
-//< Types of Values compile-not
+
     case TOKEN_MINUS: emitByte(OP_NEGATE); break;
-    default: return; // Unreachable.
+    default: return;
   }
 }
-//< Compiling Expressions unary
-//> Compiling Expressions rules
+
+
 ParseRule rules[] = {
-/* Compiling Expressions rules < Calls and Functions infix-left-paren
-  [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE},
-*/
-//> Calls and Functions infix-left-paren
-  [TOKEN_LEFT_PAREN]    = {grouping, call,   PREC_CALL},
-//< Calls and Functions infix-left-paren
-  [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE}, // [big]
-  [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_COMMA]         = {NULL,     NULL,   PREC_NONE},
-/* Compiling Expressions rules < Classes and Instances table-dot
-  [TOKEN_DOT]           = {NULL,     NULL,   PREC_NONE},
-*/
-//> Classes and Instances table-dot
-  [TOKEN_DOT]           = {NULL,     dot,    PREC_CALL},
-//< Classes and Instances table-dot
-  [TOKEN_MINUS]         = {unary,    binary, PREC_TERM},
-  [TOKEN_PLUS]          = {NULL,     binary, PREC_TERM},
-	[TOKEN_POWER]					=	{NULL,		 binary, PREC_POWER},
-  [TOKEN_SEMICOLON]     = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_SLASH]         = {NULL,     binary, PREC_FACTOR},
-  [TOKEN_STAR]          = {NULL,     binary, PREC_FACTOR},
-/* Compiling Expressions rules < Types of Values table-not
-  [TOKEN_BANG]          = {NULL,     NULL,   PREC_NONE},
-*/
-//> Types of Values table-not
-  [TOKEN_BANG]          = {unary,    NULL,   PREC_NONE},
-//< Types of Values table-not
-/* Compiling Expressions rules < Types of Values table-equal
-  [TOKEN_BANG_EQUAL]    = {NULL,     NULL,   PREC_NONE},
-*/
-//> Types of Values table-equal
-  [TOKEN_BANG_EQUAL]    = {NULL,     binary, PREC_EQUALITY},
-//< Types of Values table-equal
-  [TOKEN_EQUAL]         = {NULL,     NULL,   PREC_NONE},
-/* Compiling Expressions rules < Types of Values table-comparisons
-  [TOKEN_EQUAL_EQUAL]   = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_GREATER]       = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_GREATER_EQUAL] = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_LESS]          = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_LESS_EQUAL]    = {NULL,     NULL,   PREC_NONE},
-*/
-//> Types of Values table-comparisons
-  [TOKEN_EQUAL_EQUAL]   = {NULL,     binary, PREC_EQUALITY},
-  [TOKEN_GREATER]       = {NULL,     binary, PREC_COMPARISON},
-  [TOKEN_GREATER_EQUAL] = {NULL,     binary, PREC_COMPARISON},
-  [TOKEN_LESS]          = {NULL,     binary, PREC_COMPARISON},
-  [TOKEN_LESS_EQUAL]    = {NULL,     binary, PREC_COMPARISON},
-//< Types of Values table-comparisons
-/* Compiling Expressions rules < Global Variables table-identifier
-  [TOKEN_IDENTIFIER]    = {NULL,     NULL,   PREC_NONE},
-*/
-//> Global Variables table-identifier
-  [TOKEN_IDENTIFIER]    = {variable, NULL,   PREC_NONE},
-//< Global Variables table-identifier
-/* Compiling Expressions rules < Strings table-string
-  [TOKEN_STRING]        = {NULL,     NULL,   PREC_NONE},
-*/
-//> Strings table-string
-  [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
-//< Strings table-string
-  [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
-/* Compiling Expressions rules < Jumping Back and Forth table-and
-  [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
-*/
-//> Jumping Back and Forth table-and
-  [TOKEN_AND]           = {NULL,     and_,   PREC_AND},
-//< Jumping Back and Forth table-and
-  [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
-/* Compiling Expressions rules < Types of Values table-false
-  [TOKEN_FALSE]         = {NULL,     NULL,   PREC_NONE},
-*/
-//> Types of Values table-false
-  [TOKEN_FALSE]         = {literal,  NULL,   PREC_NONE},
-//< Types of Values table-false
-  [TOKEN_FOR]           = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_FUN]           = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_IF]            = {NULL,     NULL,   PREC_NONE},
-/* Compiling Expressions rules < Types of Values table-nil
-  [TOKEN_NIL]           = {NULL,     NULL,   PREC_NONE},
-*/
-//> Types of Values table-nil
-  [TOKEN_NIL]           = {literal,  NULL,   PREC_NONE},
-//< Types of Values table-nil
-/* Compiling Expressions rules < Jumping Back and Forth table-or
-  [TOKEN_OR]            = {NULL,     NULL,   PREC_NONE},
-*/
-//> Jumping Back and Forth table-or
-  [TOKEN_OR]            = {NULL,     or_,    PREC_OR},
-//< Jumping Back and Forth table-or
-  [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
-/* Compiling Expressions rules < Superclasses table-super
-  [TOKEN_SUPER]         = {NULL,     NULL,   PREC_NONE},
-*/
-//> Superclasses table-super
-  [TOKEN_SUPER]         = {super_,   NULL,   PREC_NONE},
-//< Superclasses table-super
-/* Compiling Expressions rules < Methods and Initializers table-this
-  [TOKEN_THIS]          = {NULL,     NULL,   PREC_NONE},
-*/
-//> Methods and Initializers table-this
-  [TOKEN_THIS]          = {this_,    NULL,   PREC_NONE},
-//< Methods and Initializers table-this
-/* Compiling Expressions rules < Types of Values table-true
-  [TOKEN_TRUE]          = {NULL,     NULL,   PREC_NONE},
-*/
-//> Types of Values table-true
-  [TOKEN_TRUE]          = {literal,  NULL,   PREC_NONE},
-//< Types of Values table-true
-  [TOKEN_VAR]           = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_WHILE]         = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_ERROR]         = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_EOF]           = {NULL,     NULL,   PREC_NONE},
+
+
+
+
+  [TOKEN_LEFT_PAREN] = {grouping, call, PREC_CALL},
+
+  [TOKEN_RIGHT_PAREN] = {NULL, NULL, PREC_NONE},
+  [TOKEN_LEFT_BRACE] = {NULL, NULL, PREC_NONE},
+  [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE},
+  [TOKEN_COMMA] = {NULL, NULL, PREC_NONE},
+
+
+
+
+  [TOKEN_DOT] = {NULL, dot, PREC_CALL},
+
+  [TOKEN_MINUS] = {unary, binary, PREC_TERM},
+  [TOKEN_PLUS] = {NULL, binary, PREC_TERM},
+ [TOKEN_POWER] = {NULL, binary, PREC_POWER},
+  [TOKEN_SEMICOLON] = {NULL, NULL, PREC_NONE},
+  [TOKEN_SLASH] = {NULL, binary, PREC_FACTOR},
+  [TOKEN_STAR] = {NULL, binary, PREC_FACTOR},
+
+
+
+
+  [TOKEN_BANG] = {unary, NULL, PREC_NONE},
+
+
+
+
+
+  [TOKEN_BANG_EQUAL] = {NULL, binary, PREC_EQUALITY},
+
+  [TOKEN_EQUAL] = {NULL, NULL, PREC_NONE},
+# 598 "compiler.c"
+  [TOKEN_EQUAL_EQUAL] = {NULL, binary, PREC_EQUALITY},
+  [TOKEN_GREATER] = {NULL, binary, PREC_COMPARISON},
+  [TOKEN_GREATER_EQUAL] = {NULL, binary, PREC_COMPARISON},
+  [TOKEN_LESS] = {NULL, binary, PREC_COMPARISON},
+  [TOKEN_LESS_EQUAL] = {NULL, binary, PREC_COMPARISON},
+
+
+
+
+
+  [TOKEN_IDENTIFIER] = {variable, NULL, PREC_NONE},
+
+
+
+
+
+  [TOKEN_STRING] = {string, NULL, PREC_NONE},
+
+  [TOKEN_NUMBER] = {number, NULL, PREC_NONE},
+
+
+
+
+  [TOKEN_AND] = {NULL, and_, PREC_AND},
+
+  [TOKEN_CLASS] = {NULL, NULL, PREC_NONE},
+  [TOKEN_ELSE] = {NULL, NULL, PREC_NONE},
+
+
+
+
+  [TOKEN_FALSE] = {literal, NULL, PREC_NONE},
+
+  [TOKEN_FOR] = {NULL, NULL, PREC_NONE},
+  [TOKEN_FUN] = {NULL, NULL, PREC_NONE},
+  [TOKEN_IF] = {NULL, NULL, PREC_NONE},
+
+
+
+
+  [TOKEN_NIL] = {literal, NULL, PREC_NONE},
+
+
+
+
+
+  [TOKEN_OR] = {NULL, or_, PREC_OR},
+
+  [TOKEN_PRINT] = {NULL, NULL, PREC_NONE},
+  [TOKEN_RETURN] = {NULL, NULL, PREC_NONE},
+
+
+
+
+  [TOKEN_SUPER] = {super_, NULL, PREC_NONE},
+
+
+
+
+
+  [TOKEN_THIS] = {this_, NULL, PREC_NONE},
+
+
+
+
+
+  [TOKEN_TRUE] = {literal, NULL, PREC_NONE},
+
+  [TOKEN_VAR] = {NULL, NULL, PREC_NONE},
+  [TOKEN_WHILE] = {NULL, NULL, PREC_NONE},
+  [TOKEN_ERROR] = {NULL, NULL, PREC_NONE},
+  [TOKEN_EOF] = {NULL, NULL, PREC_NONE},
 };
-//< Compiling Expressions rules
-//> Compiling Expressions parse-precedence
+
+
 static void parsePrecedence(Precedence precedence) {
-/* Compiling Expressions parse-precedence < Compiling Expressions precedence-body
-  // What goes here?
-*/
-//> precedence-body
+
+
+
+
   advance();
   ParseFn prefixRule = getRule(parser.previous.type)->prefix;
   if (prefixRule == NULL) {
@@ -682,51 +675,51 @@ static void parsePrecedence(Precedence precedence) {
     return;
   }
 
-/* Compiling Expressions precedence-body < Global Variables prefix-rule
-  prefixRule();
-*/
-//> Global Variables prefix-rule
+
+
+
+
   bool canAssign = precedence <= PREC_ASSIGNMENT;
   prefixRule(canAssign);
-//< Global Variables prefix-rule
-//> infix
+
+
 
   while (precedence <= getRule(parser.current.type)->precedence) {
     advance();
     ParseFn infixRule = getRule(parser.previous.type)->infix;
-/* Compiling Expressions infix < Global Variables infix-rule
-    infixRule();
-*/
-//> Global Variables infix-rule
+
+
+
+
     infixRule(canAssign);
-//< Global Variables infix-rule
+
   }
-//> Global Variables invalid-assign
+
 
   if (canAssign && match(TOKEN_EQUAL)) {
     error("Invalid assignment target.");
   }
-//< Global Variables invalid-assign
-//< infix
-//< precedence-body
+
+
+
 }
-//< Compiling Expressions parse-precedence
-//> Compiling Expressions get-rule
+
+
 static ParseRule* getRule(TokenType type) {
   return &rules[type];
 }
-//< Compiling Expressions get-rule
-//> Compiling Expressions expression
+
+
 static void expression() {
-/* Compiling Expressions expression < Compiling Expressions expression-body
-  // What goes here?
-*/
-//> expression-body
+
+
+
+
   parsePrecedence(PREC_ASSIGNMENT);
-//< expression-body
+
 }
-//< Compiling Expressions expression
-//> Local Variables block
+
+
 static void block() {
   while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
     declaration();
@@ -734,15 +727,15 @@ static void block() {
 
   consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
 }
-//< Local Variables block
-//> Calls and Functions compile-function
+
+
 static void function(FunctionType type) {
   Compiler compiler;
   initCompiler(&compiler, type);
-  beginScope(); // [no-end-scope]
+  beginScope();
 
   consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
-//> parameters
+
   if (!check(TOKEN_RIGHT_PAREN)) {
     do {
       current->function->arity++;
@@ -753,133 +746,133 @@ static void function(FunctionType type) {
       defineVariable(constant);
     } while (match(TOKEN_COMMA));
   }
-//< parameters
+
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
   consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
   block();
 
   ObjFunction* function = endCompiler();
-/* Calls and Functions compile-function < Closures emit-closure
-  emitBytes(OP_CONSTANT, makeConstant(OBJ_VAL(function)));
-*/
-//> Closures emit-closure
+
+
+
+
   emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
-//< Closures emit-closure
-//> Closures capture-upvalues
+
+
 
   for (int i = 0; i < function->upvalueCount; i++) {
     emitByte(compiler.upvalues[i].isLocal ? 1 : 0);
     emitByte(compiler.upvalues[i].index);
   }
-//< Closures capture-upvalues
+
 }
-//< Calls and Functions compile-function
-//> Methods and Initializers method
+
+
 static void method() {
   consume(TOKEN_IDENTIFIER, "Expect method name.");
   uint8_t constant = identifierConstant(&parser.previous);
-//> method-body
 
-//< method-body
-/* Methods and Initializers method-body < Methods and Initializers method-type
-  FunctionType type = TYPE_FUNCTION;
-*/
-//> method-type
+
+
+
+
+
+
   FunctionType type = TYPE_METHOD;
-//< method-type
-//> initializer-name
+
+
   if (parser.previous.length == 4 &&
       memcmp(parser.previous.start, "init", 4) == 0) {
     type = TYPE_INITIALIZER;
   }
-  
-//< initializer-name
-//> method-body
+
+
+
   function(type);
-//< method-body
+
   emitBytes(OP_METHOD, constant);
 }
-//< Methods and Initializers method
-//> Classes and Instances class-declaration
+
+
 static void classDeclaration() {
   consume(TOKEN_IDENTIFIER, "Expect class name.");
-//> Methods and Initializers class-name
+
   Token className = parser.previous;
-//< Methods and Initializers class-name
+
   uint8_t nameConstant = identifierConstant(&parser.previous);
   declareVariable();
 
   emitBytes(OP_CLASS, nameConstant);
   defineVariable(nameConstant);
 
-//> Methods and Initializers create-class-compiler
+
   ClassCompiler classCompiler;
-//> Superclasses init-has-superclass
+
   classCompiler.hasSuperclass = false;
-//< Superclasses init-has-superclass
+
   classCompiler.enclosing = currentClass;
   currentClass = &classCompiler;
 
-//< Methods and Initializers create-class-compiler
-//> Superclasses compile-superclass
+
+
   if (match(TOKEN_LESS)) {
     consume(TOKEN_IDENTIFIER, "Expect superclass name.");
     variable(false);
-//> inherit-self
+
 
     if (identifiersEqual(&className, &parser.previous)) {
       error("A class can't inherit from itself.");
     }
 
-//< inherit-self
-//> superclass-variable
+
+
     beginScope();
     addLocal(syntheticToken("super"));
     defineVariable(0);
-    
-//< superclass-variable
+
+
     namedVariable(className, false);
     emitByte(OP_INHERIT);
-//> set-has-superclass
+
     classCompiler.hasSuperclass = true;
-//< set-has-superclass
+
   }
-  
-//< Superclasses compile-superclass
-//> Methods and Initializers load-class
+
+
+
   namedVariable(className, false);
-//< Methods and Initializers load-class
+
   consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
-//> Methods and Initializers class-body
+
   while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
     method();
   }
-//< Methods and Initializers class-body
+
   consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
-//> Methods and Initializers pop-class
+
   emitByte(OP_POP);
-//< Methods and Initializers pop-class
-//> Superclasses end-superclass-scope
+
+
 
   if (classCompiler.hasSuperclass) {
     endScope();
   }
-//< Superclasses end-superclass-scope
-//> Methods and Initializers pop-enclosing
+
+
 
   currentClass = currentClass->enclosing;
-//< Methods and Initializers pop-enclosing
+
 }
-//< Classes and Instances class-declaration
-//> Calls and Functions fun-declaration
+
+
 static void funDeclaration() {
   uint8_t global = parseVariable("Expect function name.");
   markInitialized();
   function(TYPE_FUNCTION);
   defineVariable(global);
 }
-//< Calls and Functions fun-declaration
-//> Global Variables var-declaration
+
+
 static void varDeclaration() {
   uint8_t global = parseVariable("Expect variable name.");
 
@@ -893,53 +886,53 @@ static void varDeclaration() {
 
   defineVariable(global);
 }
-//< Global Variables var-declaration
-//> Global Variables expression-statement
+
+
 static void expressionStatement() {
   expression();
   consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
   emitByte(OP_POP);
 }
-//< Global Variables expression-statement
-//> Jumping Back and Forth for-statement
+
+
 static void forStatement() {
-//> for-begin-scope
+
   beginScope();
-//< for-begin-scope
+
   consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
-/* Jumping Back and Forth for-statement < Jumping Back and Forth for-initializer
-  consume(TOKEN_SEMICOLON, "Expect ';'.");
-*/
-//> for-initializer
+
+
+
+
   if (match(TOKEN_SEMICOLON)) {
-    // No initializer.
+
   } else if (match(TOKEN_VAR)) {
     varDeclaration();
   } else {
     expressionStatement();
   }
-//< for-initializer
+
 
   int loopStart = currentChunk()->count;
-/* Jumping Back and Forth for-statement < Jumping Back and Forth for-exit
-  consume(TOKEN_SEMICOLON, "Expect ';'.");
-*/
-//> for-exit
+
+
+
+
   int exitJump = -1;
   if (!match(TOKEN_SEMICOLON)) {
     expression();
     consume(TOKEN_SEMICOLON, "Expect ';' after loop condition.");
 
-    // Jump out of the loop if the condition is false.
+
     exitJump = emitJump(OP_JUMP_IF_FALSE);
-    emitByte(OP_POP); // Condition.
+    emitByte(OP_POP);
   }
 
-//< for-exit
-/* Jumping Back and Forth for-statement < Jumping Back and Forth for-increment
-  consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
-*/
-//> for-increment
+
+
+
+
+
   if (!match(TOKEN_RIGHT_PAREN)) {
     int bodyJump = emitJump(OP_JUMP);
     int incrementStart = currentChunk()->count;
@@ -951,87 +944,87 @@ static void forStatement() {
     loopStart = incrementStart;
     patchJump(bodyJump);
   }
-//< for-increment
+
 
   statement();
   emitLoop(loopStart);
-//> exit-jump
+
 
   if (exitJump != -1) {
     patchJump(exitJump);
-    emitByte(OP_POP); // Condition.
+    emitByte(OP_POP);
   }
 
-//< exit-jump
-//> for-end-scope
+
+
   endScope();
-//< for-end-scope
+
 }
-//< Jumping Back and Forth for-statement
-//> Jumping Back and Forth if-statement
+
+
 static void ifStatement() {
   consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
   expression();
-  consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition."); // [paren]
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
 
   int thenJump = emitJump(OP_JUMP_IF_FALSE);
-//> pop-then
+
   emitByte(OP_POP);
-//< pop-then
+
   statement();
 
-//> jump-over-else
+
   int elseJump = emitJump(OP_JUMP);
 
-//< jump-over-else
+
   patchJump(thenJump);
-//> pop-end
+
   emitByte(OP_POP);
-//< pop-end
-//> compile-else
+
+
 
   if (match(TOKEN_ELSE)) statement();
-//< compile-else
-//> patch-else
+
+
   patchJump(elseJump);
-//< patch-else
+
 }
-//< Jumping Back and Forth if-statement
-//> Global Variables print-statement
+
+
 static void printStatement() {
   expression();
   consume(TOKEN_SEMICOLON, "Expect ';' after value.");
   emitByte(OP_PRINT);
 }
-//< Global Variables print-statement
-//> Calls and Functions return-statement
+
+
 static void returnStatement() {
-//> return-from-script
+
   if (current->type == TYPE_SCRIPT) {
     error("Can't return from top-level code.");
   }
 
-//< return-from-script
+
   if (match(TOKEN_SEMICOLON)) {
     emitReturn();
   } else {
-//> Methods and Initializers return-from-init
+
     if (current->type == TYPE_INITIALIZER) {
       error("Can't return a value from an initializer.");
     }
 
-//< Methods and Initializers return-from-init
+
     expression();
     consume(TOKEN_SEMICOLON, "Expect ';' after return value.");
     emitByte(OP_RETURN);
   }
 }
-//< Calls and Functions return-statement
-//> Jumping Back and Forth while-statement
+
+
 static void whileStatement() {
-//> loop-start
+
   int loopStart = currentChunk()->count;
-//< loop-start
+
   consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
   expression();
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
@@ -1039,15 +1032,15 @@ static void whileStatement() {
   int exitJump = emitJump(OP_JUMP_IF_FALSE);
   emitByte(OP_POP);
   statement();
-//> loop
+
   emitLoop(loopStart);
-//< loop
+
 
   patchJump(exitJump);
   emitByte(OP_POP);
 }
-//< Jumping Back and Forth while-statement
-//> Global Variables synchronize
+
+
 static void synchronize() {
   parser.panicMode = false;
 
@@ -1065,147 +1058,117 @@ static void synchronize() {
         return;
 
       default:
-        ; // Do nothing.
+        ;
     }
 
     advance();
   }
 }
-//< Global Variables synchronize
-//> Global Variables declaration
+
+
 static void declaration() {
-//> Classes and Instances match-class
+
   if (match(TOKEN_CLASS)) {
     classDeclaration();
-/* Calls and Functions match-fun < Classes and Instances match-class
-  if (match(TOKEN_FUN)) {
-*/
+
+
+
   } else if (match(TOKEN_FUN)) {
-//< Classes and Instances match-class
-//> Calls and Functions match-fun
+
+
     funDeclaration();
-/* Global Variables match-var < Calls and Functions match-fun
-  if (match(TOKEN_VAR)) {
-*/
+
+
+
   } else if (match(TOKEN_VAR)) {
-//< Calls and Functions match-fun
-//> match-var
+
+
     varDeclaration();
   } else {
     statement();
   }
-//< match-var
-/* Global Variables declaration < Global Variables match-var
-  statement();
-*/
-//> call-synchronize
+
+
+
+
+
 
   if (parser.panicMode) synchronize();
-//< call-synchronize
+
 }
-//< Global Variables declaration
-//> Global Variables statement
+
+
 static void statement() {
   if (match(TOKEN_PRINT)) {
     printStatement();
-//> Jumping Back and Forth parse-for
+
   } else if (match(TOKEN_FOR)) {
     forStatement();
-//< Jumping Back and Forth parse-for
-//> Jumping Back and Forth parse-if
+
+
   } else if (match(TOKEN_IF)) {
     ifStatement();
-//< Jumping Back and Forth parse-if
-//> Calls and Functions match-return
+
+
   } else if (match(TOKEN_RETURN)) {
     returnStatement();
-//< Calls and Functions match-return
-//> Jumping Back and Forth parse-while
+
+
   } else if (match(TOKEN_WHILE)) {
     whileStatement();
-//< Jumping Back and Forth parse-while
-//> Local Variables parse-block
+
+
   } else if (match(TOKEN_LEFT_BRACE)) {
     beginScope();
     block();
     endScope();
-//< Local Variables parse-block
-//> parse-expressions-statement
+
+
   } else {
     expressionStatement();
-//< parse-expressions-statement
+
   }
 }
-//< Global Variables statement
-
-/* Scanning on Demand compiler-c < Compiling Expressions compile-signature
-void compile(const char* source) {
-*/
-/* Compiling Expressions compile-signature < Calls and Functions compile-signature
-bool compile(const char* source, Chunk* chunk) {
-*/
-//> Calls and Functions compile-signature
+# 1148 "compiler.c"
 ObjFunction* compile(const char* source) {
-//< Calls and Functions compile-signature
+
   initScanner(source);
-/* Scanning on Demand dump-tokens < Compiling Expressions compile-chunk
-  int line = -1;
-  for (;;) {
-    Token token = scanToken();
-    if (token.line != line) {
-      printf("%4d ", token.line);
-      line = token.line;
-    } else {
-      printf("   | ");
-    }
-    printf("%2d '%.*s'\n", token.type, token.length, token.start); // [format]
-    if (token.type == TOKEN_EOF) break;
-  }
-*/
-//> Local Variables compiler
+# 1166 "compiler.c"
   Compiler compiler;
-//< Local Variables compiler
-/* Local Variables compiler < Calls and Functions call-init-compiler
-  initCompiler(&compiler);
-*/
-//> Calls and Functions call-init-compiler
+
+
+
+
+
   initCompiler(&compiler, TYPE_SCRIPT);
-//< Calls and Functions call-init-compiler
-/* Compiling Expressions init-compile-chunk < Calls and Functions call-init-compiler
-  compilingChunk = chunk;
-*/
-//> Compiling Expressions compile-chunk
-//> init-parser-error
+
+
+
+
+
+
 
   parser.hadError = false;
   parser.panicMode = false;
 
-//< init-parser-error
+
   advance();
-//< Compiling Expressions compile-chunk
-/* Compiling Expressions compile-chunk < Global Variables compile
-  expression();
-  consume(TOKEN_EOF, "Expect end of expression.");
-*/
-//> Global Variables compile
+
+
+
+
+
+
 
   while (!match(TOKEN_EOF)) {
     declaration();
   }
-
-//< Global Variables compile
-/* Compiling Expressions finish-compile < Calls and Functions call-end-compiler
-  endCompiler();
-*/
-/* Compiling Expressions return-had-error < Calls and Functions call-end-compiler
-  return !parser.hadError;
-*/
-//> Calls and Functions call-end-compiler
+# 1204 "compiler.c"
   ObjFunction* function = endCompiler();
   return parser.hadError ? NULL : function;
-//< Calls and Functions call-end-compiler
+
 }
-//> Garbage Collection mark-compiler-roots
+
 void markCompilerRoots() {
   Compiler* compiler = current;
   while (compiler != NULL) {
@@ -1213,4 +1176,5 @@ void markCompilerRoots() {
     compiler = compiler->enclosing;
   }
 }
-//< Garbage Collection mark-compiler-roots
+
+
