@@ -22,22 +22,10 @@ print fib(30);
 ```
 Output: `832040`
 
-```
-fun integralAndDerivativeGraph(functionToGraph, a, b) {
-	graph(functionToGraph, a, b);
-	graph(derivative(functionToGraph, a), a, b);
-	graph(integral(functionToGraph, a, b), a, b);
-}
-
-integralAndDerivativeGraph("sin(x)", 0, 10*pi);
-```
-
-Output: A graph of `sin(x) from 0 to 10pi`, a graph of `d/dx sin(0) = cos(0) = 1 from 0 to 10pi`, and a graph of `integral(sin(x)) from 0 to 10pi = -cos(10pi)-(-cos(0)) = 0 from 0 to 10pi`  
-
 ## Instructions to run
 
 You can either use your own Makefile or the one already here in this repo to run the program using `make -s`. After you've done that, it'll output to a file called `main`, so you can run `./main` to use the read-eval-print-loop (REPL) or `./main filename.lilac` to run a file.
 
 ## Licensing
 
-This uses the MIT License and follows Robert Nystrom's Clox implementation from his book [Crafting Interpreters](https://craftinginterpreters.com/). It's an amazing book that has taught me most of what I know about compilers today.
+This uses the MIT License and follows Robert Nystrom's Clox implementation from his book [Crafting Interpreters](https://craftinginterpreters.com/). It's an amazing book that has taught me most of what I know about compilers today, and if you haven't read it I really recommend it!
