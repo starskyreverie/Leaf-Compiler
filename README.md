@@ -1,6 +1,6 @@
-# LilacScript
+# ACoolCompilerName
 
-An object-oriented, dynamically typed, general-purpose programming language that supports mathematical algebraic expressions (graphing expressions, integrals, derivatives), written in C. Includes a Pratt operator-precedence parser, bytecode assembler, bytecode virtual machine, bytecode disassembler, and a read-eval-print-loop. 
+A compiler for an object-oriented, dynamically typed, general-purpose programming language that supports mathematical algebraic expressions (graphing expressions, integrals, derivatives), written in C. Includes a Pratt operator-precedence parser, bytecode assembler, bytecode virtual machine, bytecode disassembler, and a read-eval-print-loop. 
 
 [Repl.it](https://replit.com/@pq43/LilacScript)
 
