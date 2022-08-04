@@ -1,10 +1,10 @@
-# ACoolCompilerName
+# Leaf Compiler 
 
 A compiler for an object-oriented, dynamically typed, general-purpose programming language that supports mathematical algebraic expressions (graphing expressions, integrals, derivatives), written in C. Includes a Pratt operator-precedence parser, bytecode assembler, bytecode virtual machine, bytecode disassembler, and a read-eval-print-loop. 
 
 [Repl.it](https://replit.com/@pq43/ACoolCompilerName)
 
-## Example code
+## Example 'Leaf' code
 
 ```
 var x = sin(3.14);
